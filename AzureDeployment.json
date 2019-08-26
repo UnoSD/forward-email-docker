@@ -1,0 +1,77 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "zoneName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the DNS zone"
+            }
+        },
+        "forwardingServerIp": {
+            "type": "string",
+            "metadata": {
+                "description": "The IP of the server (to replace with a deployment of the server in this template)"
+            }
+        },
+        "serverKey": {
+            "type": "string",
+            "metadata": {
+                "description": "The DKIM key of the forwarding server"
+            }
+        },
+        "forwardAddress": {
+            "type": "string",
+            "metadata": {
+                "description": "Email address to forward the email to"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/dnszones",
+            "name": "[parameters('zoneName')]",
+            "apiVersion": "2016-04-01",
+            "location": "global",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/dnszones/A",
+            "name": "[concat(parameters('zoneName'), '/mail')]",
+            "apiVersion": "2016-04-01",
+            "location": "global",
+            "dependsOn": [
+                "[parameters('zoneName')]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "ARecords": [
+                    {
+                        "ipv4Address": "[parameters('forwardingServerIp')]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/dnszones/TXT",
+            "name": "[concat(parameters('zoneName'), '/@')]",
+            "apiVersion": "2016-04-01",
+            "location": "global",
+            "dependsOn": [
+                "[parameters('zoneName')]"
+            ],
+            "properties": {
+                "TTL": 3600,
+                "TXTRecords": [
+                    {
+                        "value": [
+                            "[format('v=DKIM1; k=rsa; p={0}', parameters('serverKey'))]",
+                            "[format('forward-email={0}', parameters('forwardAddress'))]",
+                            "[format('v=spf1 a mx include:mail.{0} -all', parameters('zoneName'))]"
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
