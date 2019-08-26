@@ -28,10 +28,15 @@ RUN \
   curl "https://raw.githubusercontent.com/niftylettuce/forward-email/b9f6cb8cfaef8024fa51b4a023ff4f3812993d05/README.md" > forward-email.js && \
   sed -i '337,401!d' forward-email.js; exit 0 /*
 
+#ENV PORT 2525
+
 RUN nohup /usr/bin/redis-server /etc/redis/redis.conf
 
 EXPOSE 25
+#EXPOSE 2525
 
 CMD /usr/bin/redis-server /etc/redis/redis.conf && nodejs forward-email.js
 
+#docker run -P -p 25:2525/tcp forward-email:latest
 #docker exec <container name> cat /DKIM-TXT-record
+#docker port <container name>
